@@ -8,46 +8,63 @@ import { InvoiceDisplay } from "@/components/invoice-display"
 export type InvoiceItem = {
   id: string
   name: string
+  description?: string // New: Optional description
   quantity: number
   price: number
 }
 
 export type Invoice = {
   customer: string
+  companyName?: string // New: Optional
+  logoUrl?: string // New: Optional
+  signatureUrl?: string // New: Optional
   items: InvoiceItem[]
   invoiceNumber: string
   date: string
   validUntil: string
-  notes: string // Add notes field
+  notes: string
 }
 
-export function InvoiceCreator() {
+export function QuotationCreator() {
   const [step, setStep] = useState(1)
   const [invoice, setInvoice] = useState<Invoice>({
     customer: "",
+    companyName: "",
+    logoUrl: undefined,
+    signatureUrl: undefined,
     items: [],
     invoiceNumber: "",
     date: new Date().toISOString().split("T")[0],
-    validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 7 days from now
-    notes: "Thank you for your business!", // Default thank you message
+    validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    notes: "Thank you for your business!",
   })
 
-  const handleCustomerSubmit = (customer: string) => {
-    setInvoice((prev) => ({ ...prev, customer }))
+  const handleCustomerSubmit = (
+    customer: string,
+    companyName?: string,
+    logoUrl?: string,
+    signatureUrl?: string
+  ) => {
+    setInvoice((prev) => ({
+      ...prev,
+      customer,
+      companyName: companyName || "",
+      logoUrl,
+      signatureUrl,
+    }))
     setStep(2)
   }
 
   const handleItemsSubmit = (items: InvoiceItem[], notes: string) => {
-    // Generate a unique invoice number based on date and random digits
     const randomDigits = Math.floor(1000 + Math.random() * 9000)
     const dateStr = new Date().toISOString().split("T")[0].replace(/-/g, "")
-    const invoiceNumber = `INV-${dateStr}-${randomDigits}`
+    const invoiceNumber = `QUO-${dateStr}-${randomDigits}`
 
     setInvoice((prev) => ({
       ...prev,
       items,
       invoiceNumber,
-      notes: notes.trim() ? notes : "Thank you for your business!", // Use default if empty
+      notes: notes.trim() ? notes : "Thank you for your business!",
     }))
     setStep(3)
   }
@@ -55,17 +72,21 @@ export function InvoiceCreator() {
   const handleReset = () => {
     setInvoice({
       customer: "",
+      companyName: "",
+      logoUrl: undefined,
+      signatureUrl: undefined,
       items: [],
       invoiceNumber: "",
       date: new Date().toISOString().split("T")[0],
-      validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 7 days from now
-      notes: "Thank you for your business!", // Reset to default
+      validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      notes: "Thank you for your business!",
     })
     setStep(1)
   }
 
   return (
     <div className="max-w-3xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4 text-center">Quotation Creator</h1>
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -96,15 +117,27 @@ export function InvoiceCreator() {
             >
               3
             </div>
-            <span className="text-sm font-medium">Invoice</span>
+            <span className="text-sm font-medium">Quotation</span>
           </div>
         </div>
       </div>
 
-      {step === 1 && <CustomerForm initialCustomer={invoice.customer} onSubmit={handleCustomerSubmit} />}
+      {step === 1 && (
+        <CustomerForm
+          initialCustomer={invoice.customer}
+          initialCompanyName={invoice.companyName}
+          initialLogoUrl={invoice.logoUrl}
+          initialSignatureUrl={invoice.signatureUrl}
+          onSubmit={handleCustomerSubmit}
+        />
+      )}
 
       {step === 2 && (
-        <ItemsForm initialItems={invoice.items} initialNotes={invoice.notes} onSubmit={handleItemsSubmit} />
+        <ItemsForm
+          initialItems={invoice.items}
+          initialNotes={invoice.notes}
+          onSubmit={handleItemsSubmit}
+        />
       )}
 
       {step === 3 && <InvoiceDisplay invoice={invoice} onCreateNew={handleReset} />}
